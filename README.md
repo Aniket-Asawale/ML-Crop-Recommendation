@@ -410,7 +410,7 @@ This project is open source and available under the MIT License.
 
 ## 👨‍💻 Author
 
-**Senior AIML Engineer & Research Development Lead**
+** [Aniket-Asawale](https://github.com/Aniket-Asawale) **
 - **Project:** ML Mini-Project (SEM 7)
 - **Focus:** Intelligent Agriculture
 - **Year:** 2025
@@ -437,7 +437,7 @@ For questions or issues:
 
 ## 📌 Project Status
 
-**Current Status:** ✅ Ready to Start Implementation
+**Current Status:** ✅ Working Models but few models are bugged (due to invalid feature conversion to numpy)
 
 **Last Updated:** October 6, 2025
 
