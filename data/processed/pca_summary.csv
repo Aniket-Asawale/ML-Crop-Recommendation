@@ -1,0 +1,2 @@
+Original_Features,Optimal_Components,Optimal_Accuracy,Optimal_Explained_Variance,Original_Accuracy,Accuracy_Drop,Dimension_Reduction_Percent,Components_90_Variance,Components_95_Variance
+7,6,0.990909090909091,0.9999333349752627,0.9666666666666667,-0.024242424242424288,14.285714285714285,6,6

@@ -1,0 +1,15 @@
+{
+    "algorithm": "DBSCAN",
+    "eps": 0.5,
+    "min_samples": 8,
+    "n_clusters": 26,
+    "n_noise": 1366,
+    "noise_ratio": 0.6209090909090909,
+    "silhouette_score": 0.45346432014797405,
+    "adjusted_rand_index": 0.08219874978543024,
+    "normalized_mutual_info": 0.5291296306453322,
+    "homogeneity": 0.4080180962663871,
+    "completeness": 0.7524905082468762,
+    "v_measure": 0.5291296306453322,
+    "average_purity": 0.9608084365440148
+}

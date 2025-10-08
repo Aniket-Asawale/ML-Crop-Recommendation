@@ -1,0 +1,10 @@
+{
+    "Total Samples": 2200,
+    "Features": 7,
+    "Target Classes": 22,
+    "Training Samples": 1540,
+    "Validation Samples": 330,
+    "Test Samples": 330,
+    "Missing Values": 0,
+    "Duplicates Removed": 0
+}

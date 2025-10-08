@@ -1,0 +1,2 @@
+Best_Model,Best_Accuracy,Basic_Accuracy,Best_Tuned_Accuracy,Pruned_Accuracy,Best_Tree_Depth,Best_Tree_Leaves,Best_Tree_Nodes
+Basic Tree,0.045454545454545456,0.990909090909091,0.990909090909091,0.045454545454545456,17,37,73
