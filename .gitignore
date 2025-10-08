@@ -137,8 +137,8 @@ dmypy.json
 # ============================================================================
 
 # Trained Models (large .pkl files)
-models/saved_models/*.pkl
-!models/saved_models/.gitkeep
+# models/saved_models/*.pkl
+# !models/saved_models/.gitkeep
 
 # Large datasets
 data/raw/*.csv
@@ -148,8 +148,8 @@ data/raw/*.zip
 data/raw/*.tar.gz
 
 # Preprocessing objects (large files)
-data/processed/*.pkl
-!data/processed/.gitkeep
+# data/processed/*.pkl
+# !data/processed/.gitkeep
 
 # Temporary files
 *.tmp
