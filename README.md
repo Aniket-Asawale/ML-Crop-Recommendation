@@ -410,7 +410,7 @@ This project is open source and available under the MIT License.
 
 ## 👨‍💻 Author
 
-** [Aniket-Asawale](https://github.com/Aniket-Asawale) **
+- ** [Aniket-Asawale](https://github.com/Aniket-Asawale) **
 - **Project:** ML Mini-Project (SEM 7)
 - **Focus:** Intelligent Agriculture
 - **Year:** 2025
