@@ -68,6 +68,60 @@ st.markdown("""
         border-left: 4px solid #2196F3;
         margin: 1rem 0;
     }
+
+    /* Fix for table stability issues */
+    .stDataFrame {
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    .stDataFrame > div {
+        width: 100% !important;
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+        max-height: 400px !important;
+    }
+
+    .stDataFrame table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+    }
+
+    .stDataFrame th, .stDataFrame td {
+        border: 1px solid #ddd !important;
+        padding: 8px !important;
+        text-align: left !important;
+        word-wrap: break-word !important;
+    }
+
+    .stDataFrame th {
+        background-color: #f2f2f2 !important;
+        font-weight: bold !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 10 !important;
+    }
+
+    /* Prevent scrollbar flickering */
+    .stDataFrame::-webkit-scrollbar {
+        width: 8px !important;
+        height: 8px !important;
+    }
+
+    .stDataFrame::-webkit-scrollbar-track {
+        background: #f1f1f1 !important;
+        border-radius: 4px !important;
+    }
+
+    .stDataFrame::-webkit-scrollbar-thumb {
+        background: #888 !important;
+        border-radius: 4px !important;
+    }
+
+    .stDataFrame::-webkit-scrollbar-thumb:hover {
+        background: #555 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -100,12 +154,10 @@ def load_models():
             ('SVM Polynomial', models_path / 'svm_poly_model.pkl'),
             ('SVM Best', models_path / 'svm_best_model.pkl'),
             ('Random Forest', models_path / 'random_forest_model.pkl'),
-            ('Random Forest Optimized', models_path / 'random_forest_optimized.pkl'),
             ('Best Random Forest', models_path / 'best_random_forest_model.pkl'),
             ('Gradient Boosting', models_path / 'gradient_boosting_model.pkl'),
             ('AdaBoost', models_path / 'adaboost_model.pkl'),
             ('XGBoost', models_path / 'xgboost_model.pkl'),
-            ('XGBoost Optimized', models_path / 'xgboost_optimized.pkl'),
             ('Stacking Classifier', models_path / 'stacking_classifier.pkl'),
             ('Voting Classifier', models_path / 'voting_soft.pkl'),
         ]
@@ -221,11 +273,19 @@ def main():
         help="Choose the machine learning model for prediction"
     )
 
-    # Warning about model compatibility
-    if selected_model != 'Logistic Regression':
-        st.sidebar.warning(
-            "⚠️ Note: Some models may have limited prediction variety due to feature name compatibility issues. "
-            "Logistic Regression is recommended for best results."
+    # Model information and recommendations
+    if selected_model == 'Logistic Regression':
+        st.sidebar.success(
+            f"🤖 Selected Model: **{selected_model}**\n\n"
+            "✅ **Recommended Model**\n\n"
+            "This model provides the best balance of accuracy and generalization. "
+            "It's reliable for production use and avoids overfitting."
+        )
+    else:
+        st.sidebar.info(
+            f"🤖 Selected Model: **{selected_model}**\n\n"
+            "⚠️ This model may show high accuracy but could be overfitted. "
+            "For most reliable results, consider using **Logistic Regression**."
         )
 
     st.sidebar.markdown("---")
@@ -397,8 +457,51 @@ def main():
     # ========================================================================
 
     with tab2:
-        st.header("📈 Input Parameter Analysis")
-        st.write("Visual analysis of your input parameters against optimal ranges")
+        st.header("📈 Parameter Analysis")
+
+        # Add crop selection for ideal conditions
+        st.subheader("🌱 Crop-Specific Ideal Conditions")
+
+        # Define ideal growing conditions for major crops
+        crop_conditions = {
+            'rice': {'N': (80, 100), 'P': (40, 60), 'K': (35, 45), 'temp': (20, 27), 'humidity': (80, 90), 'ph': (5.5, 7.0), 'rainfall': (200, 300)},
+            'wheat': {'N': (50, 70), 'P': (30, 50), 'K': (25, 35), 'temp': (12, 25), 'humidity': (50, 70), 'ph': (6.0, 7.5), 'rainfall': (50, 100)},
+            'maize': {'N': (70, 90), 'P': (40, 60), 'K': (15, 25), 'temp': (18, 27), 'humidity': (60, 80), 'ph': (5.8, 7.0), 'rainfall': (60, 110)},
+            'cotton': {'N': (100, 130), 'P': (40, 60), 'K': (15, 25), 'temp': (21, 30), 'humidity': (70, 85), 'ph': (5.8, 8.0), 'rainfall': (75, 100)},
+            'chickpea': {'N': (30, 50), 'P': (60, 80), 'K': (70, 90), 'temp': (15, 25), 'humidity': (10, 30), 'ph': (6.5, 8.0), 'rainfall': (60, 100)},
+            'kidneybeans': {'N': (15, 25), 'P': (75, 95), 'K': (15, 25), 'temp': (15, 25), 'humidity': (15, 25), 'ph': (5.5, 7.0), 'rainfall': (60, 90)},
+            'coconut': {'N': (15, 25), 'P': (10, 20), 'K': (15, 25), 'temp': (25, 35), 'humidity': (70, 90), 'ph': (5.5, 7.5), 'rainfall': (150, 250)},
+            'banana': {'N': (90, 110), 'P': (75, 95), 'K': (45, 55), 'temp': (25, 35), 'humidity': (75, 85), 'ph': (5.5, 7.0), 'rainfall': (100, 180)},
+            'apple': {'N': (15, 25), 'P': (120, 140), 'K': (190, 210), 'temp': (18, 25), 'humidity': (80, 90), 'ph': (5.5, 7.0), 'rainfall': (100, 125)},
+            'grapes': {'N': (15, 25), 'P': (120, 140), 'K': (190, 210), 'temp': (15, 25), 'humidity': (80, 90), 'ph': (5.5, 7.0), 'rainfall': (60, 80)},
+        }
+
+        selected_crop = st.selectbox(
+            "Select a crop to view ideal growing conditions:",
+            options=['Select a crop...'] + list(crop_conditions.keys()),
+            help="Choose a crop to see its optimal parameter ranges"
+        )
+
+        if selected_crop != 'Select a crop...':
+            conditions = crop_conditions[selected_crop]
+            st.markdown(f"### 🎯 Ideal Conditions for **{selected_crop.title()}**")
+
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Nitrogen (N)", f"{conditions['N'][0]}-{conditions['N'][1]} kg/ha")
+                st.metric("Phosphorus (P)", f"{conditions['P'][0]}-{conditions['P'][1]} kg/ha")
+            with col2:
+                st.metric("Potassium (K)", f"{conditions['K'][0]}-{conditions['K'][1]} kg/ha")
+                st.metric("Temperature", f"{conditions['temp'][0]}-{conditions['temp'][1]}°C")
+            with col3:
+                st.metric("Humidity", f"{conditions['humidity'][0]}-{conditions['humidity'][1]}%")
+                st.metric("pH Level", f"{conditions['ph'][0]}-{conditions['ph'][1]}")
+            with col4:
+                st.metric("Rainfall", f"{conditions['rainfall'][0]}-{conditions['rainfall'][1]} mm")
+
+        st.markdown("---")
+        st.subheader("📊 Your Input Parameters Analysis")
+        st.write("Visual analysis of your input parameters against general optimal ranges")
 
         # Create gauge charts
         col1, col2, col3 = st.columns(3)
