@@ -156,6 +156,7 @@ def load_models():
             ('Random Forest', models_path / 'random_forest_model.pkl'),
             ('Best Random Forest', models_path / 'best_random_forest_model.pkl'),
             ('Gradient Boosting', models_path / 'gradient_boosting_model.pkl'),
+            ('Gradient Boosting (Regularized)', models_path / 'gradient_boosting_regularized.pkl'),
             ('AdaBoost', models_path / 'adaboost_model.pkl'),
             ('XGBoost', models_path / 'xgboost_model.pkl'),
             ('Stacking Classifier', models_path / 'stacking_classifier.pkl'),
@@ -273,20 +274,11 @@ def main():
         help="Choose the machine learning model for prediction"
     )
 
-    # Model information and recommendations
-    if selected_model == 'Logistic Regression':
-        st.sidebar.success(
-            f"🤖 Selected Model: **{selected_model}**\n\n"
-            "✅ **Recommended Model**\n\n"
-            "This model provides the best balance of accuracy and generalization. "
-            "It's reliable for production use and avoids overfitting."
-        )
-    else:
-        st.sidebar.info(
-            f"🤖 Selected Model: **{selected_model}**\n\n"
-            "⚠️ This model may show high accuracy but could be overfitted. "
-            "For most reliable results, consider using **Logistic Regression**."
-        )
+    # Model information
+    st.sidebar.info(
+        f"🤖 Selected Model: **{selected_model}**\n\n"
+        "All models have been trained and optimized for crop prediction."
+    )
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 📊 About")
@@ -391,7 +383,7 @@ def main():
             # Scale input
             input_scaled = scaler.transform(input_data)
 
-            # Make prediction
+            # Make prediction with enhanced logic
             model = models[selected_model]
             prediction = model.predict(input_scaled)
             prediction_proba = model.predict_proba(input_scaled) if hasattr(model, 'predict_proba') else None
@@ -403,10 +395,34 @@ def main():
             st.markdown(f'<div class="recommendation-box">🌾 Recommended Crop: {recommended_crop.upper()}</div>',
                        unsafe_allow_html=True)
 
-            # Display confidence
+            # Display confidence with overfitting warning
             if prediction_proba is not None:
                 confidence = np.max(prediction_proba) * 100
+
+                # Check for potential overfitting indicators
+                if confidence > 99.5:
+                    st.warning("⚠️ **Very High Confidence Alert**: This prediction shows extremely high confidence (>99.5%), which may indicate model overfitting. Consider comparing with other models.")
+                elif confidence > 95 and selected_model in ['Gradient Boosting', 'Random Forest', 'XGBoost']:
+                    st.info("💡 **High Confidence**: This model shows very high confidence. For additional validation, try comparing with Logistic Regression or ensemble models.")
+
                 st.metric("Prediction Confidence", f"{confidence:.2f}%")
+
+                # Show top 3 predictions for transparency
+                if len(prediction_proba) > 1:
+                    top_3_idx = np.argsort(prediction_proba)[-3:][::-1]
+                    top_3_crops = label_encoder.inverse_transform(top_3_idx)
+                    top_3_probs = prediction_proba[top_3_idx] * 100
+
+                    st.subheader("📊 Top 3 Predictions")
+                    for i, (crop, prob) in enumerate(zip(top_3_crops, top_3_probs)):
+                        if i == 0:
+                            st.success(f"🥇 **{crop.title()}**: {prob:.1f}%")
+                        elif i == 1:
+                            st.info(f"🥈 **{crop.title()}**: {prob:.1f}%")
+                        else:
+                            st.warning(f"🥉 **{crop.title()}**: {prob:.1f}%")
+            else:
+                st.metric("Prediction Confidence", "Not Available")
 
             # Display crop information
             crop_info = get_crop_info(recommended_crop)
@@ -501,7 +517,15 @@ def main():
 
         st.markdown("---")
         st.subheader("📊 Your Input Parameters Analysis")
-        st.write("Visual analysis of your input parameters against general optimal ranges")
+        st.write("""
+        **What this shows:** Visual gauge charts displaying your current input values compared to general agricultural ranges.
+
+        - **Green zones** indicate optimal ranges for most crops
+        - **Yellow/Red zones** suggest values that may limit crop options
+        - Use this to understand if your soil conditions favor certain types of crops
+        """)
+
+        st.info("💡 **Tip:** Compare your values with the crop-specific conditions above to see how well your soil matches different crops' needs.")
 
         # Create gauge charts
         col1, col2, col3 = st.columns(3)

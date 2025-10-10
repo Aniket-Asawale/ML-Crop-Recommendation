@@ -37,12 +37,11 @@ def test_model_loading():
         ('SVM Polynomial', models_path / 'svm_poly_model.pkl'),
         ('SVM Best', models_path / 'svm_best_model.pkl'),
         ('Random Forest', models_path / 'random_forest_model.pkl'),
-        ('Random Forest Optimized', models_path / 'random_forest_optimized.pkl'),
         ('Best Random Forest', models_path / 'best_random_forest_model.pkl'),
         ('Gradient Boosting', models_path / 'gradient_boosting_model.pkl'),
+        ('Gradient Boosting (Regularized)', models_path / 'gradient_boosting_regularized.pkl'),
         ('AdaBoost', models_path / 'adaboost_model.pkl'),
         ('XGBoost', models_path / 'xgboost_model.pkl'),
-        ('XGBoost Optimized', models_path / 'xgboost_optimized.pkl'),
         ('Stacking Classifier', models_path / 'stacking_classifier.pkl'),
         ('Voting Classifier', models_path / 'voting_soft.pkl'),
     ]
