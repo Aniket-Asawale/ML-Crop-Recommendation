@@ -145,15 +145,22 @@ def load_models():
         # Load best performing models
         models = {}
 
-        # Load all available trained models
-        # All models have been retrained with scaled numpy arrays (no feature name issues)
+        # Load models - prioritize deployment-compatible versions
+        # Deployment models are trained with conservative settings for maximum compatibility
         model_files = [
-            ('Logistic Regression', models_path / 'logistic_regression.pkl'),
-            ('SVM Linear', models_path / 'svm_linear_model.pkl'),
-            ('SVM RBF', models_path / 'svm_rbf_model.pkl'),
+            # Deployment-compatible models (prioritized)
+            ('Logistic Regression', models_path / 'logistic_regression_deployment.pkl'),
+            ('Random Forest', models_path / 'random_forest_deployment.pkl'),
+            ('SVM Linear', models_path / 'svm_linear_deployment.pkl'),
+            ('SVM RBF', models_path / 'svm_rbf_deployment.pkl'),
+
+            # Fallback to original models if deployment versions not available
+            ('Logistic Regression (Original)', models_path / 'logistic_regression.pkl'),
+            ('SVM Linear (Original)', models_path / 'svm_linear_model.pkl'),
+            ('SVM RBF (Original)', models_path / 'svm_rbf_model.pkl'),
             ('SVM Polynomial', models_path / 'svm_poly_model.pkl'),
             ('SVM Best', models_path / 'svm_best_model.pkl'),
-            ('Random Forest', models_path / 'random_forest_model.pkl'),
+            ('Random Forest (Original)', models_path / 'random_forest_model.pkl'),
             ('Best Random Forest', models_path / 'best_random_forest_model.pkl'),
             ('Gradient Boosting', models_path / 'gradient_boosting_model.pkl'),
             ('Gradient Boosting (Regularized)', models_path / 'gradient_boosting_regularized.pkl'),
@@ -163,13 +170,58 @@ def load_models():
             ('Voting Classifier', models_path / 'voting_soft.pkl'),
         ]
 
+        failed_models = []
+
         for name, path in model_files:
             if path.exists():
-                models[name] = joblib.load(path)
+                try:
+                    model = joblib.load(path)
+                    # Test if model can make a simple prediction
+                    test_input = np.array([[50, 50, 50, 25, 70, 6.5, 100]])
+                    _ = model.predict(test_input)
+                    models[name] = model
+                except Exception as e:
+                    failed_models.append((name, str(e)))
+                    # Provide helpful error messages for common deployment issues
+                    if "sklearn.ensemble._gb_losses" in str(e):
+                        st.warning(f"⚠️ {name}: Incompatible with deployment scikit-learn version")
+                    elif "module" in str(e).lower() and "not found" in str(e).lower():
+                        st.warning(f"⚠️ {name}: Missing dependencies in deployment environment")
+                    else:
+                        st.warning(f"⚠️ {name}: {str(e)[:100]}...")
+            else:
+                failed_models.append((name, "File not found"))
 
-        if not models:
-            st.error("No trained models found! Please train models first.")
-            return None, None, None, None, None
+        # Show loading summary
+        if models:
+            st.success(f"✅ Successfully loaded {len(models)} models")
+            if failed_models and len(failed_models) < len(model_files):
+                with st.expander(f"⚠️ {len(failed_models)} models failed to load"):
+                    for name, error in failed_models:
+                        st.text(f"• {name}: {error[:80]}...")
+        else:
+            st.error("❌ No models could be loaded!")
+            st.info("💡 This may be due to scikit-learn version compatibility issues in deployment.")
+
+            # Try to load at least basic models
+            basic_models = ['Logistic Regression', 'SVM Linear']
+            for model_name in basic_models:
+                for name, path in model_files:
+                    if name == model_name and path.exists():
+                        try:
+                            models[name] = joblib.load(path)
+                            st.success(f"✅ Fallback: Loaded {name}")
+                            break
+                        except:
+                            continue
+
+            if not models:
+                # Last resort: create a simple rule-based predictor
+                st.warning("⚠️ Using fallback rule-based prediction system")
+                models = {'Rule-Based Predictor': create_fallback_predictor()}
+                if not models['Rule-Based Predictor']:
+                    st.error("❌ Critical: No prediction system available.")
+                    return None, None, None, None, None
 
         # Load model performance data
         model_comparison = pd.read_csv(data_path / 'final_model_comparison.csv')
@@ -184,6 +236,88 @@ def load_models():
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
+def create_fallback_predictor():
+    """
+    Create a simple rule-based predictor as fallback when models fail to load
+    """
+    class RuleBasedPredictor:
+        def __init__(self):
+            # Simple rules based on typical crop requirements
+            self.crop_rules = {
+                'rice': {'N': (80, 100), 'P': (40, 60), 'K': (35, 45), 'temp': (20, 27), 'humidity': (80, 90), 'ph': (5.5, 7.0), 'rainfall': (200, 300)},
+                'cotton': {'N': (100, 140), 'P': (40, 60), 'K': (15, 25), 'temp': (21, 30), 'humidity': (75, 85), 'ph': (5.8, 8.0), 'rainfall': (50, 100)},
+                'chickpea': {'N': (30, 50), 'P': (60, 80), 'K': (70, 90), 'temp': (15, 25), 'humidity': (10, 30), 'ph': (6.5, 8.0), 'rainfall': (60, 100)},
+                'grapes': {'N': (15, 25), 'P': (125, 135), 'K': (195, 205), 'temp': (15, 25), 'humidity': (80, 90), 'ph': (5.5, 7.0), 'rainfall': (60, 80)},
+                'apple': {'N': (15, 25), 'P': (125, 145), 'K': (195, 205), 'temp': (20, 25), 'humidity': (90, 95), 'ph': (5.5, 6.5), 'rainfall': (100, 125)},
+            }
+
+        def predict(self, X):
+            """Simple rule-based prediction"""
+            if len(X.shape) == 1:
+                X = X.reshape(1, -1)
+
+            predictions = []
+            for sample in X:
+                n, p, k, temp, humidity, ph, rainfall = sample
+
+                best_crop = 'rice'  # default
+                best_score = 0
+
+                for crop, ranges in self.crop_rules.items():
+                    score = 0
+                    total_features = len(ranges)
+
+                    # Check how well the input matches each crop's requirements
+                    if ranges['N'][0] <= n <= ranges['N'][1]: score += 1
+                    if ranges['P'][0] <= p <= ranges['P'][1]: score += 1
+                    if ranges['K'][0] <= k <= ranges['K'][1]: score += 1
+                    if ranges['temp'][0] <= temp <= ranges['temp'][1]: score += 1
+                    if ranges['humidity'][0] <= humidity <= ranges['humidity'][1]: score += 1
+                    if ranges['ph'][0] <= ph <= ranges['ph'][1]: score += 1
+                    if ranges['rainfall'][0] <= rainfall <= ranges['rainfall'][1]: score += 1
+
+                    score_ratio = score / total_features
+                    if score_ratio > best_score:
+                        best_score = score_ratio
+                        best_crop = crop
+
+                # Convert crop name to label (assuming label encoder mapping)
+                crop_to_label = {
+                    'apple': 0, 'banana': 1, 'blackgram': 2, 'chickpea': 3, 'coconut': 4,
+                    'coffee': 5, 'cotton': 6, 'grapes': 7, 'jute': 8, 'kidneybeans': 9,
+                    'lentil': 10, 'maize': 11, 'mango': 12, 'mothbeans': 13, 'mungbean': 14,
+                    'muskmelon': 15, 'orange': 16, 'papaya': 17, 'pigeonpeas': 18,
+                    'pomegranate': 19, 'rice': 20, 'watermelon': 21
+                }
+
+                predictions.append(crop_to_label.get(best_crop, 20))  # default to rice
+
+            return np.array(predictions)
+
+        def predict_proba(self, X):
+            """Return dummy probabilities for compatibility"""
+            predictions = self.predict(X)
+            n_samples = len(predictions)
+            n_classes = 22
+
+            # Create probability matrix with high confidence for predicted class
+            probabilities = np.zeros((n_samples, n_classes))
+            for i, pred in enumerate(predictions):
+                probabilities[i, pred] = 0.8  # 80% confidence
+                # Distribute remaining probability among other classes
+                remaining_prob = 0.2 / (n_classes - 1)
+                for j in range(n_classes):
+                    if j != pred:
+                        probabilities[i, j] = remaining_prob
+
+            return probabilities
+
+    try:
+        return RuleBasedPredictor()
+    except Exception as e:
+        st.error(f"Failed to create fallback predictor: {e}")
+        return None
 
 def get_crop_info(crop_name):
     """Get information about recommended crop"""
