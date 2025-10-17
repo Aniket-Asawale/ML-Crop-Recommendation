@@ -13,7 +13,6 @@ The research paper must be latest as of 2025 and must perform not all but most o
 9 To implement CART
 10 To implement LDA
 The ML project must implement most of the above 10 ML experiments / topics as mentioned in the research paper and must exercise these on the dataset.
-Find me a research paper first with this criteria and then I will implement the project.
 The research paper must be real with DOI number and must be open access.
 The paper must be related to AIML.
 The dataset should be available and if possible verified.
