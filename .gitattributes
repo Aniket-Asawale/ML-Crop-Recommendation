@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# .gitattributes
+
+*.ipynb linguist-vendored
+# For language stats, removing jupyter as it skews my main profile language tab
